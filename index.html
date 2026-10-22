@@ -31,16 +31,19 @@ main{max-width:520px;margin:0 auto;padding:12px 16px 110px}
 .hero .meta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px}
 .hero .meta b{font-size:22px;font-weight:700}
 .hero .meta span{color:var(--ink2);font-size:15px}
-.hero .progress{margin-top:16px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
-.hero .progress i{display:block;height:100%;background:var(--ink);width:0}
+.hero .progress{margin-top:16px;height:6px;display:flex;gap:4px}
+.hero .progress i{flex:1;position:relative;background:var(--line);border-radius:3px;overflow:hidden}
+.hero .progress i b{position:absolute;inset:0;width:0;background:var(--c)}
 .hero .note{margin:8px 0 0;font-size:14px;color:var(--ink2)}
 
 /* 카테고리 목록 */
 .cats{margin-top:18px;display:grid;gap:12px}
 .cat{display:grid;grid-template-columns:8px 1fr auto;align-items:center;gap:16px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 18px 0;overflow:hidden}
 .cat i{display:block;height:100%;background:var(--c)}
+.cat>div{min-width:0}
 .cat h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--c)}
 .cat p{margin:4px 0 0;font-size:14px;color:var(--ink2)}
+.cat .tz{margin-top:8px;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cat .st{font-weight:700;font-size:15px;white-space:nowrap;color:var(--ink2)}
 .cat .st.done{color:var(--c)}
 
@@ -69,6 +72,7 @@ main{max-width:520px;margin:0 auto;padding:12px 16px 110px}
 .dots i.on{background:var(--c)}
 .dots i.ok{background:var(--ok)}
 .dots i.bad{background:var(--bad)}
+.qlab{margin:0 0 6px;font-size:14px;font-weight:700;color:var(--c)}
 .q{font-size:21px;font-weight:700;line-height:1.4;letter-spacing:-.01em;margin:0 0 18px}
 .choice{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:14px 16px;margin:0 0 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-size:16.5px;line-height:1.4}
 .choice b{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:13px;color:var(--ink2)}
@@ -145,12 +149,12 @@ function home(){
   <section class="hero">
     <p class="day">${dd}</p>
     <div class="meta"><b>${m}월 ${wd}요일</b><span>${n===all.length?`오늘 ${scoreOf(quiz.date,all)} / ${all.length} 정답`:`${n} / ${all.length} 풀었어요`}</span></div>
-    <div class="progress"><i style="width:${n/all.length*100}%"></i></div>
+    <div class="progress">${Object.keys(CATS).map(k=>{const is=qIdx(k),a=is.filter(i=>results[quiz.date]?.answers?.[i]!=null).length;return `<i style="--c:${CATS[k].c}"><b style="width:${a/is.length*100}%"></b></i>`}).join('')}</div>
     ${quiz.date===t?'':`<p class="note">${t} 문제는 아직 안 올라와서 ${quiz.date} 것을 보여줘요.</p>`}
   </section>
   <div class="cats">${Object.keys(CATS).map(k=>{
-    const is=qIdx(k),r=quiz.briefing.filter(b=>b.category===k).length,d=doneOf(quiz.date,is),a=is.filter(i=>results[quiz.date]?.answers?.[i]!=null).length;
-    return `<button class="cat" data-k="${k}" style="--c:${CATS[k].c}"><i></i><div><h2>${k}</h2><p>${CATS[k].read} ${r}개 읽고 문제 ${is.length}개</p></div><span class="st ${d?'done':''}">${d?`${scoreOf(quiz.date,is)} / ${is.length} 정답`:a?`${a} / ${is.length} 푸는 중`:'시작하기'}</span></button>`}).join('')}
+    const is=qIdx(k),items=quiz.briefing.filter(b=>b.category===k),d=doneOf(quiz.date,is),a=is.filter(i=>results[quiz.date]?.answers?.[i]!=null).length;
+    return `<button class="cat" data-k="${k}" style="--c:${CATS[k].c}"><i></i><div><h2>${k}</h2><p>${CATS[k].read} ${items.length}개 읽고 문제 ${is.length}개</p>${items[0]?`<p class="tz">${esc(items[0].title)}</p>`:''}</div><span class="st ${d?'done':''}">${d?`${scoreOf(quiz.date,is)} / ${is.length} 정답`:a?`${a} / ${is.length} 푸는 중`:'시작하기'}</span></button>`}).join('')}
   </div>`;
   for(const b of app.querySelectorAll('.cat'))b.onclick=()=>catPage(b.dataset.k);
   document.getElementById('hist').onclick=history;
@@ -172,6 +176,7 @@ function question(k){
   const is=qIdx(k),a=ans(),pos=is.findIndex(i=>a[i]==null),qi=is[pos],q=quiz.questions[qi];
   app.innerHTML=bar(`<button id="back">${k} 읽기</button>`)+`
   <div class="dots">${is.map(i=>`<i class="${a[i]==null?(i===qi?'on':''):a[i]===quiz.questions[i].answer?'ok':'bad'}"></i>`).join('')}</div>
+  <p class="qlab">${k} ${pos+1} / ${is.length}</p>
   <p class="q">${esc(q.q)}</p>
   ${q.choices.map((c,i)=>`<button class="choice" data-i="${i}"><b>${i+1}</b><span>${esc(c)}</span></button>`).join('')}
   <div id="exp"></div>`;
